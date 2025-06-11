@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: financial_management
+    ports:
+      - "4000:4000"
+    environment:
+      MIX_ENV: dev
+      DATABASE_URL: ecto://postgres.etkegryuhsosypaatvve:qngIydSf6886uDVt@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
+    volumes:
+      - .:/app
+    command: mix phx.server
