@@ -100,31 +100,54 @@ export default function TransactionsPage() {
   const hasFetched = useRef(false)
   const { user } = useAuth()
 
-  useEffect(() => {
-    if (!user?.id || hasFetched.current) return
-    hasFetched.current = true
+useEffect(() => {
+  if (!user?.id || hasFetched.current) return
+  hasFetched.current = true
 
-    fetchTransactions()
-    fetchTags()
-  }, [user?.id])
+  fetchTransactions()
+  fetchTags()
+}, [user?.id])
 
-  const fetchTransactions = async () => {
-    try {
-      const response = await axios.get(`http://localhost:4000/api/transactions/user/${user?.id}`)
-      const rawData = response.data?.data ?? []
 
-      const parsedData: Transaction[] = rawData.map((t: any) => ({
-        ...t,
-        value: parseFloat(t.value),
-      }))
-
-      setTransactions(parsedData)
-    } catch (error) {
-      console.error("Erro ao carregar transações:", error)
-    } finally {
-      setIsLoading(false)
-    }
+const fetchTransactions = async (retry = true) => {
+  if (!user?.id) {
+    console.warn("Usuário não carregado, ignorando fetchTransactions")
+    return
   }
+
+  try {
+    const response = await axios.get(
+      `http://localhost:4000/api/transactions/user/${user.id}`
+    )
+    const rawData = response.data?.data ?? []
+
+    const parsedData: Transaction[] = rawData.map((t: any) => ({
+      ...t,
+      value: parseFloat(t.value),
+    }))
+
+    setTransactions(parsedData)
+  } catch (error: any) {
+    console.error("Erro ao carregar transações:", error)
+
+    if (retry) {
+      // tenta uma vez após 1 segundo
+      setTimeout(() => fetchTransactions(false), 1000)
+    }
+  } finally {
+    setIsLoading(false)
+  }
+}
+
+
+  const handleRemoveTag = async (transactionId: number, tagId: number) => {
+  try {
+    await axios.delete(`http://localhost:4000/api/transactions/${transactionId}/tags/${tagId}`)
+    fetchTransactions()
+  } catch (error) {
+    console.error("Erro ao remover tag:", error)
+  }
+}
 
   const fetchTags = async () => {
     try {
@@ -249,7 +272,9 @@ return (
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Adicionar Tags à Transação</DialogTitle>
-            <DialogDescription>Selecione as tags desejadas para esta transação.</DialogDescription>
+            <DialogDescription>
+              Selecione as tags desejadas para esta transação.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 max-h-[300px] overflow-y-auto">
             {tags.map((tag) => (
@@ -281,105 +306,86 @@ return (
 
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-  <div>
-    <h1 className="text-3xl font-bold text-gray-900">Transações</h1>
-    <p className="text-gray-600">Gerencie suas receitas e despesas</p>
-  </div>
-  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-    <DialogTrigger asChild>
-      <Button
-        onClick={openCreateDialog}
-        className="bg-emerald-600 hover:bg-emerald-700"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Nova Transação
-      </Button>
-    </DialogTrigger>
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>
-          {editingTransaction ? "Editar Transação" : "Nova Transação"}
-        </DialogTitle>
-        <DialogDescription>
-          {editingTransaction
-            ? "Edite as informações da transação"
-            : "Preencha os dados da nova transação"}
-        </DialogDescription>
-      </DialogHeader>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="description">Descrição</Label>
-          <Input
-            id="description"
-            value={formData.description}
-            onChange={(e) =>
-              setFormData({ ...formData, description: e.target.value })
-            }
-            required
-          />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Transações</h1>
+            <p className="text-gray-600">Gerencie suas receitas e despesas</p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreateDialog} className="bg-emerald-600 hover:bg-emerald-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Transação
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingTransaction ? "Editar Transação" : "Nova Transação"}</DialogTitle>
+                <DialogDescription>
+                  {editingTransaction
+                    ? "Edite as informações da transação"
+                    : "Preencha os dados da nova transação"}
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descrição</Label>
+                  <Input
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="value">Valor</Label>
+                  <Input
+                    id="value"
+                    type="number"
+                    step="0.01"
+                    value={formData.value}
+                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">Tipo</Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value: "RECEITA" | "DESPESA") =>
+                      setFormData({ ...formData, type: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="RECEITA">Receita</SelectItem>
+                      <SelectItem value="DESPESA">Despesa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">Data</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+                    {editingTransaction ? "Salvar" : "Criar"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="value">Valor</Label>
-          <Input
-            id="value"
-            type="number"
-            step="0.01"
-            value={formData.value}
-            onChange={(e) =>
-              setFormData({ ...formData, value: e.target.value })
-            }
-            required
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="type">Tipo</Label>
-          <Select
-            value={formData.type}
-            onValueChange={(value: "RECEITA" | "DESPESA") =>
-              setFormData({ ...formData, type: value })
-            }
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="RECEITA">Receita</SelectItem>
-              <SelectItem value="DESPESA">Despesa</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="date">Data</Label>
-          <Input
-            id="date"
-            type="date"
-            value={formData.date}
-            onChange={(e) =>
-              setFormData({ ...formData, date: e.target.value })
-            }
-            required
-          />
-        </div>
-        <div className="flex justify-end space-x-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsDialogOpen(false)}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            className="bg-emerald-600 hover:bg-emerald-700"
-          >
-            {editingTransaction ? "Salvar" : "Criar"}
-          </Button>
-        </div>
-      </form>
-    </DialogContent>
-  </Dialog>
-</div>
-
 
         <Card>
           <CardHeader>
@@ -412,8 +418,13 @@ return (
                 {filteredTransactions.map((transaction) => (
                   <TableRow key={transaction.id}>
                     <TableCell className="font-medium">{transaction.description}</TableCell>
-                    <TableCell className={transaction.type === "RECEITA" ? "text-green-600" : "text-red-600"}>
-                      R$ {Number(transaction.value).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                    <TableCell
+                      className={transaction.type === "RECEITA" ? "text-green-600" : "text-red-600"}
+                    >
+                      R${" "}
+                      {Number(transaction.value).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      })}
                     </TableCell>
                     <TableCell>
                       <Badge variant={transaction.type === "RECEITA" ? "default" : "destructive"}>
@@ -424,14 +435,27 @@ return (
                       <div className="flex flex-col gap-1">
                         <span>{new Date(transaction.date).toLocaleDateString("pt-BR")}</span>
                         <div className="flex flex-wrap gap-1">
-                          {transaction.tags?.map((tag, idx) => (
-                            <span
-                              key={idx}
-                              className={`text-xs font-semibold px-2 py-0.5 rounded ${generateRandomColor()}`}
+                        {transaction.tags?.map((tagName: string) => {
+                          const tagObj = tags.find((t) => t.name === tagName)
+
+                          return (
+                            <div
+                              key={tagName}
+                              className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded ${generateRandomColor()}`}
                             >
-                              {tag}
-                            </span>
-                          ))}
+                              {tagName}
+                              {tagObj?.id && (
+                                <button
+                                  onClick={() => handleRemoveTag(transaction.id, tagObj.id)}
+                                  className="text-red-500 hover:text-red-700 text-sm"
+                                  title="Remover tag"
+                                >
+                                  ✕
+                                </button>
+                              )}
+                            </div>
+                          )
+                        })}
                         </div>
                       </div>
                     </TableCell>
@@ -472,5 +496,6 @@ return (
     </MainLayout>
   </PrivateRoute>
 )
+
 
 }
