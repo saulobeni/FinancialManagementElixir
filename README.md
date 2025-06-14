@@ -129,6 +129,4 @@ Este comando irá subir os containers necessários (PostgreSQL e outros serviço
 
 ## 🏁 Pronto! A aplicação está rodando localmente 🚀
 
-```
-
-```
+````
