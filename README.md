@@ -99,11 +99,8 @@ mix ecto.migrate
 * No **Windows** (dentro do terminal do Docker, após subir os containers):
 
 ```bash
-docker exec -it nome_do_container bash
 mix ecto.migrate
 ```
-
-> 🐳 Substitua `nome_do_container` pelo nome do seu container.
 
 ---
 
