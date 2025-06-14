@@ -1,3 +1,4 @@
+````markdown
 # 🚀 Guia de Inicialização da Aplicação Financial Management
 
 Este guia irá te orientar em como clonar, configurar e executar a aplicação, tanto o front-end quanto o back-end.
@@ -15,7 +16,7 @@ git clone https://github.com/saulobeni/FinancialManagementElixir.git
 2. Acesse a pasta do projeto:
 
 ```bash
-cd FinancialManagement
+cd FinancialManagementElixir
 ```
 
 ---
@@ -40,7 +41,7 @@ npm install --force
 npm run dev
 ```
 
-O front estará disponível normalmente em:
+O front estará disponível em:
 
 ```
 http://localhost:5173
@@ -78,6 +79,10 @@ config :financial_management, FinancialManagement.Repo,
   pool_size: 10
 ```
 
+> 🔐 **Atenção:** Nunca versionar arquivos com informações sensíveis.
+
+---
+
 ### 3. Instale as dependências do Elixir:
 
 ```bash
@@ -86,29 +91,32 @@ mix deps.get
 
 ### 4. Rode as migrations para criar as tabelas do banco:
 
-No Linux ou MacOS:
+* No **Linux** ou **MacOS**:
 
 ```bash
 mix ecto.migrate
 ```
 
-Se estiver no Windows, execute o comando **dentro do terminal do Docker** após iniciar o container:
+* No **Windows** (dentro do terminal do Docker, após subir os containers):
 
 ```bash
+docker exec -it nome_do_container bash
 mix ecto.migrate
 ```
+
+> 🐳 Substitua `nome_do_container` pelo nome do seu container.
 
 ---
 
 ## 🐳 Iniciando o Docker
 
-1. Na raiz do projeto ou na pasta onde está o `compose.yml`, execute:
+Na raiz do projeto (onde está localizado o `docker-compose.yml`), execute:
 
 ```bash
 docker-compose up
 ```
 
-Este comando irá subir os containers necessários (PostgreSQL, possivelmente outros serviços futuros).
+Este comando irá subir os containers necessários (PostgreSQL e outros serviços).
 
 ---
 
@@ -120,3 +128,7 @@ Este comando irá subir os containers necessários (PostgreSQL, possivelmente ou
 ---
 
 ## 🏁 Pronto! A aplicação está rodando localmente 🚀
+
+```
+
+```
