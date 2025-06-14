@@ -1,4 +1,3 @@
-````markdown
 # 🚀 Guia de Inicialização da Aplicação Financial Management
 
 Este guia irá te orientar em como clonar, configurar e executar a aplicação, tanto o front-end quanto o back-end.
@@ -128,5 +127,3 @@ Este comando irá subir os containers necessários (PostgreSQL e outros serviço
 ---
 
 ## 🏁 Pronto! A aplicação está rodando localmente 🚀
-
-````
